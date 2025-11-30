@@ -1,0 +1,21 @@
+# WordPress
+.DS_Store
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build
+*.zip
+dist/
+
+# Environment
+.env
+.env.local
