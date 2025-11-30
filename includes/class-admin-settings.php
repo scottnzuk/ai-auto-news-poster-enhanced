@@ -166,6 +166,9 @@ class AANP_Admin_Settings {
      * Settings page
      */
     public function settings_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'ai-auto-news-poster'));
+        }
         include AANP_PLUGIN_DIR . 'admin/settings-page.php';
     }
     
@@ -218,10 +221,10 @@ class AANP_Admin_Settings {
         $value = isset($options['llm_provider']) ? $options['llm_provider'] : 'openai';
         
         echo '<select name="aanp_settings[llm_provider]" id="llm_provider">';
-        echo '<option value="openai"' . selected($value, 'openai', false) . '>OpenAI</option>';
-        echo '<option value="anthropic"' . selected($value, 'anthropic', false) . '>Anthropic</option>';
-        echo '<option value="openrouter"' . selected($value, 'openrouter', false) . '>OpenRouter</option>';
-        echo '<option value="custom"' . selected($value, 'custom', false) . '>Custom API</option>';
+        echo '<option value="openai"' . selected(esc_attr($value), 'openai', false) . '>' . esc_html__('OpenAI', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="anthropic"' . selected(esc_attr($value), 'anthropic', false) . '>' . esc_html__('Anthropic', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="openrouter"' . selected(esc_attr($value), 'openrouter', false) . '>' . esc_html__('OpenRouter', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="custom"' . selected(esc_attr($value), 'custom', false) . '>' . esc_html__('Custom API', 'ai-auto-news-poster') . '</option>';
         echo '</select>';
         echo '<p class="description">' . __('Select your preferred LLM provider.', 'ai-auto-news-poster') . '</p>';
     }
@@ -248,9 +251,9 @@ class AANP_Admin_Settings {
         
         echo '<div class="aanp-categories">';
         foreach ($categories as $category) {
-            $checked = in_array($category->term_id, $selected_categories) ? 'checked' : '';
+            $checked = in_array($category->term_id, $selected_categories, true) ? 'checked' : '';
             echo '<label>';
-            echo '<input type="checkbox" name="aanp_settings[categories][]" value="' . $category->term_id . '" ' . $checked . ' />';
+            echo '<input type="checkbox" name="aanp_settings[categories][]" value="' . esc_attr($category->term_id) . '" ' . esc_attr($checked) . ' />';
             echo ' ' . esc_html($category->name);
             echo '</label><br>';
         }
@@ -266,9 +269,9 @@ class AANP_Admin_Settings {
         $value = isset($options['word_count']) ? $options['word_count'] : 'medium';
         
         echo '<select name="aanp_settings[word_count]" id="word_count">';
-        echo '<option value="short"' . selected($value, 'short', false) . '>Short (300-400 words)</option>';
-        echo '<option value="medium"' . selected($value, 'medium', false) . '>Medium (500-600 words)</option>';
-        echo '<option value="long"' . selected($value, 'long', false) . '>Long (800-1000 words)</option>';
+        echo '<option value="short"' . selected(esc_attr($value), 'short', false) . '>' . esc_html__('Short (300-400 words)', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="medium"' . selected(esc_attr($value), 'medium', false) . '>' . esc_html__('Medium (500-600 words)', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="long"' . selected(esc_attr($value), 'long', false) . '>' . esc_html__('Long (800-1000 words)', 'ai-auto-news-poster') . '</option>';
         echo '</select>';
         echo '<p class="description">' . __('Select the desired word count for generated posts.', 'ai-auto-news-poster') . '</p>';
     }
@@ -281,9 +284,9 @@ class AANP_Admin_Settings {
         $value = isset($options['tone']) ? $options['tone'] : 'neutral';
         
         echo '<select name="aanp_settings[tone]" id="tone">';
-        echo '<option value="neutral"' . selected($value, 'neutral', false) . '>Neutral</option>';
-        echo '<option value="professional"' . selected($value, 'professional', false) . '>Professional</option>';
-        echo '<option value="friendly"' . selected($value, 'friendly', false) . '>Friendly</option>';
+        echo '<option value="neutral"' . selected(esc_attr($value), 'neutral', false) . '>' . esc_html__('Neutral', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="professional"' . selected(esc_attr($value), 'professional', false) . '>' . esc_html__('Professional', 'ai-auto-news-poster') . '</option>';
+        echo '<option value="friendly"' . selected(esc_attr($value), 'friendly', false) . '>' . esc_html__('Friendly', 'ai-auto-news-poster') . '</option>';
         echo '</select>';
         echo '<p class="description">' . __('Select the tone of voice for generated content.', 'ai-auto-news-poster') . '</p>';
     }
@@ -314,8 +317,9 @@ class AANP_Admin_Settings {
      */
     public function ajax_generate_posts() {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'aanp_nonce')) {
-            wp_die('Security check failed');
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aanp_nonce')) {
+            wp_send_json_error('Security check failed');
+            wp_die();
         }
         
         // Check user capabilities
@@ -389,8 +393,9 @@ class AANP_Admin_Settings {
      */
     public function ajax_purge_cache() {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'aanp_nonce')) {
-            wp_die('Security check failed');
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aanp_nonce')) {
+            wp_send_json_error('Security check failed');
+            wp_die();
         }
         
         // Check user capabilities
@@ -444,8 +449,8 @@ class AANP_Admin_Settings {
             $valid_cat_ids = wp_list_pluck($valid_categories, 'term_id');
             
             foreach ($input['categories'] as $cat_id) {
-                $cat_id = intval($cat_id);
-                if (in_array($cat_id, $valid_cat_ids)) {
+                $cat_id = absint($cat_id);
+                if (in_array($cat_id, $valid_cat_ids, true)) {
                     $sanitized['categories'][] = $cat_id;
                 }
             }

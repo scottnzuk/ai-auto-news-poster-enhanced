@@ -142,14 +142,14 @@ class AANP_Cache_Manager {
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-                '_transient_aanp_%'
+                $wpdb->esc_like('_transient_aanp_') . '%'
             )
         );
         
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-                '_transient_timeout_aanp_%'
+                $wpdb->esc_like('_transient_timeout_aanp_') . '%'
             )
         );
     }
@@ -192,7 +192,12 @@ class AANP_Cache_Manager {
             return;
         }
         
-        $url = 'https://api.cloudflare.com/client/v4/zones/' . $options['cloudflare_zone_id'] . '/purge_cache';
+        // Validate zone ID format
+        if (!preg_match('/^[a-f0-9]{32}$/i', $options['cloudflare_zone_id'])) {
+            return;
+        }
+        
+        $url = 'https://api.cloudflare.com/client/v4/zones/' . sanitize_text_field($options['cloudflare_zone_id']) . '/purge_cache';
         
         wp_remote_post($url, array(
             'headers' => array(
@@ -215,7 +220,7 @@ class AANP_Cache_Manager {
         $transient_count = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
-                '_transient_aanp_%'
+                $wpdb->esc_like('_transient_aanp_') . '%'
             )
         );
         

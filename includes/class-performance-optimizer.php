@@ -46,8 +46,10 @@ class AANP_Performance_Optimizer {
         }
         
         // Add index hints for better performance
-        if (strpos($clauses['where'], 'aanp_') !== false) {
-            $clauses['join'] .= " USE INDEX (PRIMARY)";
+        if (isset($clauses['where']) && strpos($clauses['where'], 'aanp_') !== false) {
+            if (isset($clauses['join'])) {
+                $clauses['join'] .= " USE INDEX (PRIMARY)";
+            }
         }
         
         return $clauses;

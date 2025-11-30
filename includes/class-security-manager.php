@@ -74,12 +74,19 @@ class AANP_Security_Manager {
      * @return bool True if valid
      */
     public function validate_api_response($response) {
+        // Validate input type
+        if (!is_string($response)) {
+            return false;
+        }
+        
         // Check for suspicious content
         $suspicious_patterns = array(
             '/<script[^>]*>.*?<\/script>/is',
             '/javascript:/i',
             '/on\w+\s*=/i',
-            '/<iframe[^>]*>.*?<\/iframe>/is'
+            '/<iframe[^>]*>.*?<\/iframe>/is',
+            '/<object[^>]*>.*?<\/object>/is',
+            '/<embed[^>]*>/is'
         );
         
         foreach ($suspicious_patterns as $pattern) {

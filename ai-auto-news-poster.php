@@ -216,7 +216,7 @@ if (!function_exists('aanp_activation_redirect')) {
         if (get_option('aanp_activation_redirect', false)) {
             delete_option('aanp_activation_redirect');
             if (!isset($_GET['activate-multi'])) {
-                wp_redirect(admin_url('options-general.php?page=ai-auto-news-poster&aanp_activated=1'));
+                wp_safe_redirect(admin_url('options-general.php?page=ai-auto-news-poster&aanp_activated=1'));
                 exit;
             }
         }
@@ -229,6 +229,8 @@ try {
 } catch (Exception $e) {
     error_log('AANP Fatal Error: ' . $e->getMessage());
     add_action('admin_notices', function() use ($e) {
-        echo '<div class="notice notice-error"><p>AI Auto News Poster Fatal Error: ' . esc_html($e->getMessage()) . '</p></div>';
+        if (current_user_can('manage_options')) {
+            echo '<div class="notice notice-error"><p>' . esc_html__('AI Auto News Poster Fatal Error: ', 'ai-auto-news-poster') . esc_html($e->getMessage()) . '</p></div>';
+        }
     });
 }

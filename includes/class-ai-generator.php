@@ -314,8 +314,19 @@ class AANP_AI_Generator {
             return false;
         }
         
+        // Validate response is string
+        if (!is_string($response)) {
+            error_log('AANP: Invalid response type');
+            return false;
+        }
+        
         // Try to parse JSON response
         $json_data = json_decode($response, true);
+        
+        // Check for JSON errors
+        if (json_last_error() !== JSON_ERROR_NONE && $json_data !== null) {
+            error_log('AANP: JSON decode error: ' . json_last_error_msg());
+        }
         
         if ($json_data && isset($json_data['title']) && isset($json_data['content'])) {
             return array(

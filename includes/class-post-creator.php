@@ -29,6 +29,12 @@ class AANP_Post_Creator {
      * @return int|false Post ID on success, false on failure
      */
     public function create_post($generated_content, $source_article) {
+        // Validate inputs
+        if (!is_array($generated_content) || !is_array($source_article)) {
+            error_log('AANP: Invalid input types');
+            return false;
+        }
+        
         if (empty($generated_content['title']) || empty($generated_content['content'])) {
             error_log('AANP: Invalid generated content data');
             return false;
