@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 $options = get_option('aanp_settings', array());
 $post_creator = new AANP_Post_Creator();
 $stats = $post_creator->get_stats();
-$recent_posts = $post_creator->get_recent_posts(5);
+$recent_posts = is_array($post_creator->get_recent_posts(5)) ? $post_creator->get_recent_posts(5) : array();
 ?>
 
 <div class="wrap">

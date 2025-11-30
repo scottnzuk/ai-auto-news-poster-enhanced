@@ -105,12 +105,12 @@ class AANP_Rate_Limiter {
                     $ip_parts = explode(',', $ip);
                     $ip = trim($ip_parts[0]);
                 }
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     return $ip;
                 }
             }
         }
         
-        return '127.0.0.1';
+        return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '127.0.0.1';
     }
 }

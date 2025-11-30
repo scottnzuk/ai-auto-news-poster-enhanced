@@ -84,14 +84,11 @@ class AANP_News_Fetch {
             return $articles;
         }
         
-        // Block local/private IPs
+        // Block localhost only
         $parsed = wp_parse_url($feed_url);
-        if (isset($parsed['host'])) {
-            $ip = gethostbyname($parsed['host']);
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                error_log('AANP: Blocked private/local IP: ' . $ip);
-                return $articles;
-            }
+        if (isset($parsed['host']) && in_array(strtolower($parsed['host']), array('localhost', '127.0.0.1', '::1'), true)) {
+            error_log('AANP: Blocked localhost URL');
+            return $articles;
         }
         
         // Use WordPress HTTP API
@@ -116,8 +113,7 @@ class AANP_News_Fetch {
         
         // Parse XML with security settings
         libxml_use_internal_errors(true);
-        libxml_disable_entity_loader(true);
-        $xml = simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOENT | LIBXML_NOCDATA);
+        $xml = simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOCDATA);
         
         if ($xml === false) {
             error_log('AANP: Failed to parse XML from RSS feed: ' . $feed_url);
@@ -294,8 +290,8 @@ class AANP_News_Fetch {
         }
         
         $body = wp_remote_retrieve_body($response);
-        libxml_disable_entity_loader(true);
-        $xml = simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOENT | LIBXML_NOCDATA);
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOCDATA);
         
         if ($xml === false) {
             return array(

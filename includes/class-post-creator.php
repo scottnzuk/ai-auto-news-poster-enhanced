@@ -180,15 +180,18 @@ class AANP_Post_Creator {
         
         $table_name = $wpdb->prefix . 'aanp_generated_posts';
         
-        $wpdb->insert(
-            $table_name,
-            array(
-                'post_id' => $post_id,
-                'source_url' => $source_article['link'],
-                'generated_at' => current_time('mysql')
-            ),
-            array('%d', '%s', '%s')
-        );
+        // Check if table exists
+        if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) === $table_name) {
+            $wpdb->insert(
+                $table_name,
+                array(
+                    'post_id' => $post_id,
+                    'source_url' => isset($source_article['link']) ? $source_article['link'] : '',
+                    'generated_at' => current_time('mysql')
+                ),
+                array('%d', '%s', '%s')
+            );
+        }
     }
     
     /**
@@ -245,11 +248,13 @@ class AANP_Post_Creator {
             global $wpdb;
             $table_name = $wpdb->prefix . 'aanp_generated_posts';
             
-            $wpdb->delete(
-                $table_name,
-                array('post_id' => $post_id),
-                array('%d')
-            );
+            if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) === $table_name) {
+                $wpdb->delete(
+                    $table_name,
+                    array('post_id' => $post_id),
+                    array('%d')
+                );
+            }
         }
         
         return (bool) $result;
@@ -270,6 +275,16 @@ class AANP_Post_Creator {
         global $wpdb;
         
         $table_name = $wpdb->prefix . 'aanp_generated_posts';
+        
+        // Check if table exists
+        if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) !== $table_name) {
+            return array(
+                'total' => 0,
+                'today' => 0,
+                'week' => 0,
+                'month' => 0
+            );
+        }
         
         // Total generated posts
         $total_posts = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
@@ -323,6 +338,11 @@ class AANP_Post_Creator {
         global $wpdb;
         
         $table_name = $wpdb->prefix . 'aanp_generated_posts';
+        
+        // Check if table exists
+        if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) !== $table_name) {
+            return array();
+        }
         
         $results = $wpdb->get_results(
             $wpdb->prepare(

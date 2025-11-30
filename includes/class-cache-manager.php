@@ -96,8 +96,10 @@ class AANP_Cache_Manager {
      * Purge all plugin cache
      */
     public function purge_all() {
-        // Clear WordPress object cache for our group
-        wp_cache_flush_group($this->cache_group);
+        // Clear WordPress object cache
+        if (function_exists('wp_cache_flush_group')) {
+            wp_cache_flush_group($this->cache_group);
+        }
         
         // Clear transients
         $this->clear_transients();
@@ -139,19 +141,21 @@ class AANP_Cache_Manager {
     private function clear_transients() {
         global $wpdb;
         
-        $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-                $wpdb->esc_like('_transient_aanp_') . '%'
-            )
-        );
-        
-        $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-                $wpdb->esc_like('_transient_timeout_aanp_') . '%'
-            )
-        );
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->options}'") === $wpdb->options) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    $wpdb->esc_like('_transient_aanp_') . '%'
+                )
+            );
+            
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    $wpdb->esc_like('_transient_timeout_aanp_') . '%'
+                )
+            );
+        }
     }
     
     /**
@@ -201,10 +205,10 @@ class AANP_Cache_Manager {
         
         wp_remote_post($url, array(
             'headers' => array(
-                'Authorization' => 'Bearer ' . $options['cloudflare_api_key'],
+                'Authorization' => 'Bearer ' . sanitize_text_field($options['cloudflare_api_key']),
                 'Content-Type' => 'application/json'
             ),
-            'body' => json_encode(array('purge_everything' => true)),
+            'body' => wp_json_encode(array('purge_everything' => true)),
             'timeout' => 30
         ));
     }
@@ -217,12 +221,15 @@ class AANP_Cache_Manager {
     public function get_cache_stats() {
         global $wpdb;
         
-        $transient_count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
-                $wpdb->esc_like('_transient_aanp_') . '%'
-            )
-        );
+        $transient_count = 0;
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->options}'") === $wpdb->options) {
+            $transient_count = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    $wpdb->esc_like('_transient_aanp_') . '%'
+                )
+            );
+        }
         
         return array(
             'transients' => (int) $transient_count,

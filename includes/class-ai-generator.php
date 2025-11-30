@@ -324,7 +324,7 @@ class AANP_AI_Generator {
         $json_data = json_decode($response, true);
         
         // Check for JSON errors
-        if (json_last_error() !== JSON_ERROR_NONE && $json_data !== null) {
+        if (json_last_error() !== JSON_ERROR_NONE) {
             error_log('AANP: JSON decode error: ' . json_last_error_msg());
         }
         

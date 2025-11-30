@@ -41,17 +41,7 @@ class AANP_Performance_Optimizer {
      * @return array Modified clauses
      */
     public function optimize_post_queries($clauses, $query) {
-        if (!is_admin() || !$query->is_main_query()) {
-            return $clauses;
-        }
-        
-        // Add index hints for better performance
-        if (isset($clauses['where']) && strpos($clauses['where'], 'aanp_') !== false) {
-            if (isset($clauses['join'])) {
-                $clauses['join'] .= " USE INDEX (PRIMARY)";
-            }
-        }
-        
+        // WordPress handles query optimization automatically
         return $clauses;
     }
     
@@ -64,8 +54,8 @@ class AANP_Performance_Optimizer {
      * @return string Modified tag
      */
     public function add_async_attribute($tag, $handle, $src) {
-        if ('aanp-admin-js' === $handle) {
-            return str_replace(' src', ' async src', $tag);
+        if ('aanp-admin-js' === $handle && is_admin()) {
+            return str_replace(' src', ' defer src', $tag);
         }
         
         return $tag;
